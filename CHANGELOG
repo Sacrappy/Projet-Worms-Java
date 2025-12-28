@@ -1,0 +1,240 @@
+CHANGELOG est un fichier qui documente les changements significatifs apportés à un projet,version
+par version. Il permet aux utilisateurs, contributeurs et mainteneurs de suivre l’évolution du projet.
+
+exemple :
+## v0.0.0 (2025-10-27)
+- Ajout de la fonctionnalité X
+- Correction d'un bug critique dans Y
+- Amélioration des performances de Z
+
+
+Journal des modifications :------------------------------------------------------------------
+## v0.0.1 (2025-10-27)
+
+Kiu Wai
+------------------------------------------------------------------------------------------
+- Ajout d'une classe ModelActor.java dans src/Backend utilisée pour modéliser les personnages.
+
+David
+------------------------------------------------------------------------------------------
+- Ajout d'une classe Terrain.java dans src/Backend utilisée pour modéliser le terrain et gérer ses colisions
+
+Yanis
+------------------------------------------------------------------------------------------
+- Ajout d'une interface swing contenant 4 boutons : Load Game (non implémenté), Start Game (non implémenté),
+    Options (non implémenté) et Exit (implémenté) : Menu.java et GameWindow.java
+- Ajout d'une classe TerrainPanel dans frontend pour faciliter l'affichage des bitmaps plus tard.
+- Ajout de la possibilité d'ajouter une image de fond et une musique de fond au menu d'accueil.
+
+## v0.0.2 (2025-10-29)
+Yanis
+------------------------------------------------------------------------------------------
+- Ajout d'un Panel permettant de choisir la version du jeu (Console/graphique) : GameModeSelectionPanel.java
+- Ajout d'une implémentation fonctionnelle de la version console : GameTextConsole.java
+- Ajout d'un background rose pour les test dans resources/images.
+- Ajout d'un terrain en bitmap pour les test dans resources/images.
+- Fix des erreus de logique dans les fichier ActorModel.java et Terrain.java.
+- Fix des erreurs out of bounds dans le fichier ActorModel.java.
+- Fix de l'implémentation des URL pour les ressources dans le fichier Terrain.java.
+
+## v0.0.3 (2025-11-03)
+
+Yanis
+------------------------------------------------------------------------------------------
+- Ajout de l'affichage de l'eau en mode console
+- Ajout d'une pipeline avec 2 jobs : vérification du code avec des tests JUnit (à rédiger et placer dans src/test) et vérification du build du fichier jar
+
+## v0.0.4 (2025-11-12)
+
+Kiu Wai
+-------------------------------------------------------------------------------------------
+
+- Ajout de la variable width dans ActorModel
+- Correction de la boucle d'entrée des commandes de mouvement
+- Amélioration de la soumission à la gravité du personnage (ne reste plus en l'air)
+
+## v0.0.5
+
+Kiu Wai 
+--------------------------------------------------------------------------------------------
+
+- Correction du bug qui faisait que le joueur pouvait gravir des murs de taille infinie
+
+## v0.0.6 (2025-11-15)
+
+Kiu Wai
+---------------------------------------------------------------------------------------------
+
+- Implémentation des équipes (classe Team) et des tours.
+- Ajout de la possibilité de détruire le terrain (méthode destroy() dans Terrain).
+- Ajout de la classe Pair pour entre autres la manipulation de coordonnées.
+
+## v0.0.7
+
+Maël
+--------------------------------------------------------------------------------------------
+
+- changement dans TerrainPanel.java des variable
+    private Backend.ActorModel character;
+    private Backend.Terrain ground;    
+    private BufferedImage imageCharacter;
+- changement dans TerrainPanel.java, maintenant on peut lire des char pour les touche pour faire bouger le joueur dans la méthode keyPressed
+- changement dans Gamewindow.java, implémentation de KeyListener pour lire les touches et les transformés en char dans la méthode keyPressed 
+- ajout d'une image test qui représent le personnages en 10*20 - CharacterTest.png
+- multi threading
+    
+
+## v0.0.8 (2025-11-22)
+
+Kiu Wai
+---------------------------------------------------------------------------------------------
+
+- Correction des méthodes isColliding() de la classe Terrain qui renvoient true lorsque le joueur touche l'eau.
+
+
+## v0.0.9 (2025-11-23)
+
+David
+----------------------------------------------------------------------------------------------
+- Ajout des tests JUnit pour Terrain.java
+
+Kiu Wai 
+----------------------------------------------------------------------------------------------
+
+- Ajout d'un paramètre radius dans la méthode Terrain.destroy
+- Ajout d'une méthode Terrain.inBounds
+- Modification de Terrain.destroy pour vérifier si les pixels détruits sont bien à l'intérieur du terrain.
+
+Mathis (2025-11-23)
+---------------------------------------------------------------------------------------------
+
+- Implémentation des projectiles (Classe Projectile)
+- Ajout de isColliding dans Terrain pour la classe Projectile
+- Ajout des tests pour ActorModel.java
+
+## v0.1.0 (2025-11-28)
+
+Yanis
+----------------------------------------------------------------------------------------------
+- Fix des bugs dans la Version Graphique ( changement du scaling du Terrain et du joueur dans le Panel)
+- Déplacement de la mise à jour du terrain dans une fonction séparer appeler par GameWindow
+- Ajout de GameEngine qui gère la partie
+- Ajout de la souris en tant que pointeur pour viser et tirer des projectiles
+- Implémentation des équipes dans la version graphiques
+- Déplacement de la gestion des touches du terrain vers GameWindow (la fenêtre de jeu)
+- Dissociation entre Joueur et Terrain
+- Changement de la façon dont les objets se dessine
+- Les joeurs se dessine eux-meme sur le terrainPanel
+- Les Projectiles se dessine eux-même sur le terrainPanel
+- Ajout d'une barre de vie au dessus des joueurs
+- Ajout d'un indicateur pour savoir quel vers on contrôle
+- Fix de la fonction jump dans ActorModel empechant le saut
+- Implémentation des projectiles dans la version Graphique
+- Les projectiles font des dégats au joueurs et détruisent le terrain
+- Le jeu en version Graphique tourne maintenant en temps réels et non au touches par touches
+- Ajout du tour par tour en temps, chaque tour dure 30s et le ver ne peut tirer qu"une fois par tour
+- modification de la gestion de collision pour ne pas gravir des hauteurs trop grandes
+- modification du chargement de la bitmap
+- modification de la gravité qui est maintenant gérer par GameEngine
+- Fix du bug "moonwalk" ou les joueurs continuait de se déplacer après la fin de leur tour
+- Fix d'un bug glitchant le joueur dans les murs
+- Fix des bugs causant le crash du jeu lorsque tous les joueurs sont morts
+- Fix d'un bug causant les joueurs a clipper sous le terrain
+- Ajout de la possibilité de passer son tour en appuyant sur entrée
+- Fix d'un bug causant le crash du jeu en fin de partie
+- Fix d'un bug causant le crash du jeu lorsque l'on passe son tour en fin de partie
+- restructuration des fichiers resources 
+- Ajout de MapSelectionPanel un panel permettant de selectionner la map et le background a utiliser
+- Modification de isColliding(ActorModel character) devenu obselete pour utiliser la nouvelle version
+- Modification de Terrain.java pour choisir la map et le background
+- modification du constructeur de GameWindow pour avoir le choix de la map et du background
+- Modification de GameTextConsole pour pouvoir choisir la map (pas besoin du background pour la version console)
+- Fix d'un bug empechant le chargement du terrain
+- Ajout du chargement des background dans la version graphique
+- Ajout d'un panel ImagePreviewPanel, pour prévisualiser le choix des map et du background
+- Implémentation de ImagePreview panel dans MapSelectionPanel
+- Modification de isWater dans Terrain pour utiliser la transparence au lieu de la couleur
+- Fix d'un bug ou la résolution du background ne match pas la resolution du panel
+- Modification de la façon dont les joueurs spawn pour eviter qu'il apparaissent directement dans le vide ou dans l'eau peu importe la map
+
+
+David
+----------------------------------------------------------------------------------------------
+- Ajout d'une classe Terrain.java dans src/Backend utilisée pour modéliser le terrain et gérer ses colisions
+- Ajout des tests JUnit pour Terrain.java
+- Fix de certains bugs de Terrain.java
+- Configuration complète de la CI
+- Configuration complète de la CD avec un jar et un exe
+- Ajout d'un release_note.md venant en même temps que la release, fait par un script release.ps1 ajouté lui aussi, qui prends le CHANGELOG brut et qui ne prends que la partie
+    spécifique au tag (version) de la release
+
+Kiu Wai
+----------------------------------------------------------------------------------------------
+- Ajout d'une classe ModelActor.java dans src/Backend utilisée pour modéliser les personnages.
+- Ajout de la variable width dans ActorModel
+- Correction de la boucle d'entrée des commandes de mouvement
+- Amélioration de la soumission à la gravité du personnage (ne reste plus en l'air)
+- Correction du bug qui faisait que le joueur pouvait gravir des murs de taille infinie
+- Implémentation des équipes (classe Team) et des tours.
+- Ajout de la possibilité de détruire le terrain (méthode destroy() dans Terrain).
+- Ajout de la classe Pair pour entre autres la manipulation de coordonnées.
+- Correction des méthodes isColliding() de la classe Terrain qui renvoient true lorsque le joueur touche l'eau.
+- Ajout d'un paramètre radius dans la méthode Terrain.destroy
+- Ajout d'une méthode Terrain.inBounds
+- Modification de Terrain.destroy pour vérifier si les pixels détruits sont bien à l'intérieur du terrain.
+- Mise à jour de la classe GameTextConsole pour qu'elle utilise GameEngine
+- Implémentation de Projectile dans GameTexteConsole
+
+Mathis
+----------------------------------------------------------------------------------------------
+- Implémentation des projectiles (Classe Projectile)
+- Ajout de isColliding dans Terrain pour la classe Projectile
+- Ajout des tests pour ActorModel.java
+- Modification de GameENgine.update pour réduire le temps restant de la manche si un projectil est tiré.
+
+Maël
+----------------------------------------------------------------------------------------------
+- changement dans TerrainPanel.java des variable
+    private Backend.ActorModel character;
+    private Backend.Terrain ground;    
+    private BufferedImage imageCharacter;
+- changement dans TerrainPanel.java, maintenant on peut lire des char pour les touche pour faire bouger le joueur dans la méthode keyPressed
+- changement dans Gamewindow.java, implémentation de KeyListener pour lire les touches et les transformés en char dans la méthode keyPressed 
+- ajout d'une image test qui représent le personnages en 10*20 - CharacterTest.png
+- multi threading
+
+## v0.1.1 (2025-11-28)
+
+Kiu Wai 
+------------------------------------------------------------------------------------------------
+- Modification des fichiers contenus dans resources/Images/Maps pour que l'eau soit transparente.
+
+Yanis
+------------------------------------------------------------------------------------------------
+- Ajout d'une classe HUD set son implémentation dans terrain panel pour afficher la barre de vie et l'icone du joueur actuel
+- Ajout d'une fonction ShowGameOverScreen dans GameWindow.java
+- Modification de la fonction run pour détecter automatique la fin de partie et appeler ShowGameOverScreen
+- Ajout d'un Panel ShowGameOverPanel.java permettant de relancer une partie (même carte), avec une réinitalisation des meme paramètre ou de retourner vers le menu principal
+
+Mael
+------------------------------------------------------------------------------------------------
+- Ajout de deux dépendances jackson et guava dans le build.gradle
+- Ajout d'une class de Gestion de Sauvegarde -> GestionSauvegarde.java qui permet de sauvegarder et charger une partie en Json
+- Ajout d'un fichier à la racine qui contient le fichier la sauvegarde sauvegarde.json
+- Ajout d'une class Partie.java pour charger et sauvegarder toutes les valeurs en Json
+
+## v0.1.2 (2025-11-28)
+
+Kiu Wai
+-------------------------------------------------------------------------------------------------
+- Changement de nom de méthode : Terrain.getTerrain -> Terrain.getImage
+- Ajout d'une variable ActorModel.icon de type BufferedImage
+- Ajout de variables statiques start et elapsed dans GameWindow pour calculer le temps.
+- Suppression de l'unique paramètre du constructeur de HUD
+- Modification de HUD.draw pour afficher le temps global, le décompte du tour et l'ordre de passage des joueurs
+- Ajout de varibles privées LinkedList<ActorModel> turns et int currentPlayerID pour l'implémentation de l'ordre de passage
+- Ajout de méthodes HUD.timeFormat et HUD.definePlayerID pour les implémentations ci-dessus.
+
+David
+--------------------------------------------------------------------------------------------------
+- Ajout d'une map et de plusieurs background
