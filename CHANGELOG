@@ -238,3 +238,34 @@ Kiu Wai
 David
 --------------------------------------------------------------------------------------------------
 - Ajout d'une map et de plusieurs background
+
+## v0.1.3 (2025-12-28)
+
+David
+--------------------------------------------------------------------------------------------------
+- Ajout des ressources d'images (maps, weapons, vers)
+
+Yanis
+--------------------------------------------------------------------------------------------------
+🛠 Système d'Items et Inventaire
+Ajout de la hiérarchie ObjectModel : Création d'une classe abstraite de base ObjectModel et de ses sous-classes Weapon (gestion des dégâts) et Consumable (gestion des objet consommables).
+
+Utilisation des Wildcards Java : Mise en place de ? extends ObjectModel dans les méthodes de gestion d'inventaire pour permettre la manipulation flexible des listes d'object (inventaire).
+
+Mode d'inventaire flexible : Ajout d'une option permettant de basculer entre un inventaire individuel (propre à chaque ver) et un inventaire d'équipe (partagé entre tous les membres d'une équipe).
+
+Refonte du HUD : Implémentation d'un inventaire visuel de 8 cases, incluant 2 emplacements permanents et la gestion du survol (tooltip) pour afficher les descriptions.
+
+⚙️ Menu des Options & Contrôles
+Raccourcis dynamiques (Keybindings) : Remplacement des touches statiques par une HashMap <String, Integer> permettant la personnalisation complète des touches via l'interface.
+
+Support des boutons de souris : Intégration d'un système de capture globale (AWTEventListener) permettant d'assigner des clics de souris (Clic gauche, Clic droit, etc.) aux actions du jeu.
+
+Correction du mouvement continu : Mise à jour synchronisée des méthodes keyPressed et keyReleased pour garantir que le personnage s'arrête correctement lors du relâchement d'une touche personnalisée.
+
+Sécurisation des listeners : Correction d'une erreur de type NullPointerException lors du changement rapide de touches grâce à une vérification de sécurité dans la méthode de fermeture de l'écoute (stopKeyListening).
+
+🎮 Améliorations du GameEngine
+Gestion des équipes : Ajout de la méthode getCurrentTeam() dans le GameEngine pour faciliter la récupération de l'inventaire partagé.
+
+Filtrage des interactions : Mise à jour de la détection des clics dans GameWindow pour ignorer les commandes de tir lorsque l'utilisateur clique sur l'interface de l'inventaire.

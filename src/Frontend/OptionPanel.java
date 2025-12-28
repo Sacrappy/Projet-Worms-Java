@@ -1,21 +1,7 @@
 package Frontend;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,8 +10,10 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
 public class OptionPanel extends JPanel {
     private GameWindow gameWindow;
@@ -34,9 +22,17 @@ public class OptionPanel extends JPanel {
     private boolean listeningForKey = false;
     private JButton currentKeyButton = null;
     private String currentActionName = null;
+    private AWTEventListener globalMouseCapture;
 
     public OptionPanel(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
+        
+        keybindings.put("Move Left", KeyEvent.VK_Q);
+        keybindings.put("Move Right", KeyEvent.VK_D);
+        keybindings.put("Jump", KeyEvent.VK_Z);
+        keybindings.put("Pause", KeyEvent.VK_ESCAPE);
+        keybindings.put("Use", MouseEvent.BUTTON1);
+
         setLayout(new BorderLayout());
         setBackground(new Color(50, 50, 50));
 
@@ -60,10 +56,7 @@ public class OptionPanel extends JPanel {
         bottomPanel.add(backButton);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        keybindings.put("Move Left", KeyEvent.VK_LEFT);
-        keybindings.put("Move Right", KeyEvent.VK_RIGHT);
-        keybindings.put("Jump", KeyEvent.VK_UP);
-        keybindings.put("Shoot", MouseEvent.BUTTON1);
+        
     }
 
     private JPanel creerPanelAffichage() {
@@ -177,23 +170,58 @@ public class OptionPanel extends JPanel {
     }
 
     private JPanel creerPanelCommandes() {
-        JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10)); // 0 ligne, 2 colonnes
+       JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(new Color(70, 70, 70));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        Font labelFont = new Font("Arial", Font.BOLD, 20);
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        JLabel invLabel = new JLabel("Inventory Mode :");
+        invLabel.setForeground(Color.WHITE);
+        invLabel.setFont(labelFont);
+        panel.add(invLabel, gbc);
+
+        gbc.gridx = 1;
+        String[] invOptions = { "Individual", "Team / Shared" };
+        JComboBox<String> invSelector = new JComboBox<>(invOptions);
+        invSelector.addActionListener(e -> {
+            boolean isTeam = invSelector.getSelectedIndex() == 1;
+            // Met à jour la logique dans GameEngine via GameWindow
+            if(gameWindow.getGameEngine() != null) {
+                gameWindow.getGameEngine().setTeamInventoryMode(isTeam);
+            }
+            System.out.println("Inventory Mode changed to: " + invOptions[invSelector.getSelectedIndex()]);
+        });
+        panel.add(invSelector, gbc);
+
+    // sepate options
+    gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        panel.add(new JSeparator(), gbc);
+        gbc.gridwidth = 1;
+        
         // Les actions seront ajoutées ici, basées sur le HashMap
+        int row = 2;
         for (Map.Entry<String, Integer> entry : keybindings.entrySet()) {
             String actionName = entry.getKey();
             int keyCode = entry.getValue();
 
-            panel.add(new JLabel(actionName + " :") {
-                {
-                    setForeground(Color.WHITE);
-                }
-            });
+            gbc.gridx = 0; gbc.gridy = row;
+            JLabel actionLabel = new JLabel(actionName + " :");
+            actionLabel.setForeground(Color.WHITE);
+            actionLabel.setFont(labelFont);
+            panel.add(actionLabel, gbc);
 
+            gbc.gridx = 1;
             JButton keyButton = new JButton(KeyEvent.getKeyText(keyCode));
+            keyButton.setFont(new Font("Arial", Font.PLAIN, 18));
             keyButton.addActionListener(e -> startKeyListening(actionName, keyButton));
-            panel.add(keyButton);
+            panel.add(keyButton, gbc);
+            row++;
+            ;
+
         }
 
         return panel;
@@ -207,9 +235,30 @@ public class OptionPanel extends JPanel {
         currentKeyButton = button;
 
         button.setText("Appuyez sur une touche...");
+        button.setBackground(Color.YELLOW);
 
         // Utilisez directement GameWindow pour ajouter le KeyListener
         gameWindow.addKeyListener(keyListener);
+        globalMouseCapture = event -> {
+        if (event instanceof MouseEvent) {
+            MouseEvent me = (MouseEvent) event;
+            if (me.getID() == MouseEvent.MOUSE_PRESSED && listeningForKey) {
+                // get the mouse button
+                int mouseButton = me.getButton();
+                keybindings.put(currentActionName, mouseButton);
+                currentKeyButton.setText("Mouse " + mouseButton);
+                
+                // Consume mouse event to prevent the button from consuming
+                me.consume();
+                
+                // stop listening
+                SwingUtilities.invokeLater(this::stopKeyListening);
+            }
+        }
+    };
+
+    // activate the global mouse listener
+    Toolkit.getDefaultToolkit().addAWTEventListener(globalMouseCapture, AWTEvent.MOUSE_EVENT_MASK);
         gameWindow.requestFocus(); // S'assurer que la fenêtre a le focus pour capturer l'événement
     }
 
@@ -218,6 +267,12 @@ public class OptionPanel extends JPanel {
         currentKeyButton.setEnabled(true);
         // Important: retirer le KeyListener pour éviter qu'il capture les touches après
         gameWindow.removeKeyListener(keyListener);
+        gameWindow.removeMouseListener(mouseListener);
+        if(globalMouseCapture !=null){
+        Toolkit.getDefaultToolkit().removeAWTEventListener(globalMouseCapture);
+        }
+        globalMouseCapture= null;
+        currentKeyButton.setBackground(Color.WHITE);
         currentKeyButton = null;
         currentActionName = null;
 
@@ -242,6 +297,17 @@ public class OptionPanel extends JPanel {
                 // Vous pouvez ajouter ici une logique pour mettre à jour la GameWindow
                 // afin que le jeu utilise la nouvelle liaison de touche.
                 // Ex: gameWindow.updateKeyBinding(keybindings);
+            }
+        }
+    };
+    private MouseListener mouseListener = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (listeningForKey) {
+                int mouseButton = e.getButton();
+                keybindings.put(currentActionName, mouseButton);
+                currentKeyButton.setText("Mouse " + mouseButton);
+                stopKeyListening();
             }
         }
     };
@@ -337,4 +403,7 @@ public class OptionPanel extends JPanel {
 
         gameWindow.requestFocus();
     }
+    public Map<String, Integer> getKeybindings() {
+    return keybindings;
+}
 }

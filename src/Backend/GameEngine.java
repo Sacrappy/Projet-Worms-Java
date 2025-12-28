@@ -16,10 +16,22 @@ public class GameEngine {
     private static final long TURN_DURATION_MS = 30000;
     private boolean hasShot = false;
 
+    // Selected inventory slot
+    private int selectedSlot = 0;
+
+    //Power Gauge
+    private float currentPower = 0.0f;
+    private boolean increasingPower = true;
+    private boolean powerGaugeActive = false;
+    private static final float POWER_GAUGE_SPEED = 0.5f; // Speed of power gauge 
+    private static final float POWER_GAUGE_MIN = 0.0f;
+    private static final float POWER_GAUGE_MAX = 100.0f;
+
     // Game settings
     private static final float PROJECTILE_SPEED = 15.0f;
     private static final float EXPLOSION_RADIUS = 30.0f;
     private static final int EXPLOSION_DAMAGE = 50;
+    private boolean isTeamInventory;
 
     public GameEngine(Terrain terrain, List<Team> teams) {
         this.terrain = terrain;
@@ -29,7 +41,23 @@ public class GameEngine {
         this.currentTurnIndex = 0;
         startTurn();
     }
+        public int getSelectedSlot() {
+            return selectedSlot;
+        }
+        public void setSelectedSlot(int selectedSlot) {
+            if(selectedSlot>=0&& selectedSlot<8)
+            this.selectedSlot = selectedSlot;
+        }
 
+        public ObjectModel getSelectedItem() {
+    List<ObjectModel> inventory = isTeamInventory() ? 
+        getCurrentTeam().getTeamInventory() : getCurrentPlayer().getInventory();
+    
+    if (selectedSlot >= 0 && selectedSlot < inventory.size()) {
+        return inventory.get(selectedSlot);
+    }
+    return null;
+}
     private void startTurn(){
         this.currentPlayer = getPlayerFromPair(turnOrder.get(currentTurnIndex));
         this.turnStartTime = System.currentTimeMillis();
@@ -59,6 +87,16 @@ public class GameEngine {
             }
         }
         return null;
+    }
+    public void setTeamInventoryMode(boolean isTeamInventory) {
+        this.isTeamInventory = isTeamInventory;
+    }
+    public void removeFromInventory(ObjectModel item) {
+        if (isTeamInventory) {
+            getCurrentTeam().removeFromInventory(item);
+            return;
+        }
+        currentPlayer.removeFromInventory(item);
     }
 
     public ActorModel getCurrentPlayer() {
@@ -104,7 +142,22 @@ public class GameEngine {
         for(Team team : teams){
             team.update();
         }
-
+        if (powerGaugeActive && !hasShot) {
+            // Update power gauge
+            if (increasingPower) {
+                currentPower += POWER_GAUGE_SPEED;
+                if (currentPower >= POWER_GAUGE_MAX) {
+                    currentPower = POWER_GAUGE_MAX;
+                    increasingPower = false;
+                }
+            } else {
+                currentPower -= POWER_GAUGE_SPEED;
+                if (currentPower <= POWER_GAUGE_MIN) {
+                    currentPower = POWER_GAUGE_MIN;
+                    increasingPower = true;
+                }
+            }
+        }
         // then update projectile if any
         if(activeProjectile != null){
             activeProjectile.update();
@@ -117,6 +170,13 @@ public class GameEngine {
         turnStartTime -= 25000-(currentTime-turnStartTime);
         }
     }
+    public void startCharging() {
+    if (!hasShot && activeProjectile == null) {
+        powerGaugeActive = true;
+        currentPower = POWER_GAUGE_MIN;
+        increasingPower = true;
+    }
+}
 
     public void nextTurn() {
         // ends current turn and moves to next player alive in turn order
@@ -158,7 +218,9 @@ public class GameEngine {
             }
         }
     }
-
+    public boolean isTeamInventory() {
+        return isTeamInventory;
+    }   
     public void endActionPhase(){
         // ends the actions phase of the current player and updates HP
         //updating players HP
@@ -177,21 +239,33 @@ public class GameEngine {
     }
 
     public void shoot(float dirX, float dirY) {
-        if (!currentPlayer.isAlive()) return;
-        if (hasShot) return; // can only shoot once per turn
+        if (!currentPlayer.isAlive()||hasShot||activeProjectile!=null) return;
+        // can only shoot once per turn
         // shoots a projectile in the given direction
         // System.out.println("Player shooting with direction (" + dirX + ", " + dirY + ")");
-        if (activeProjectile != null) {
-            //System.out.println("Cannot shoot: projectile already active.");
-            return; // cannot shoot if a projectile is already active
-        }
+        //System.out.println("Cannot shoot: projectile already active.");
+        // cannot shoot if a projectile is already active
         //System.out.println("Creating projectile...");
+        
+        powerGaugeActive = false; // stop power gauge
 
         float startX = currentPlayer.getX() + currentPlayer.height/ 2f;
         float startY = currentPlayer.getY() - currentPlayer.height/2f; // start from center height
-        this.activeProjectile = new Projectile(startX, startY, PROJECTILE_SPEED, dirX, dirY, currentPlayer, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
+    // adjust speed based on current power
+    float effectiveSpeed = PROJECTILE_SPEED * (currentPower / 100.0f);
+        //effectiveSpeed = Math.max(5.0f, effectiveSpeed); // if we need a minimum speed
+        
+        this.activeProjectile = new Projectile(startX, startY, effectiveSpeed, dirX, dirY, currentPlayer, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
         hasShot = true;
+        currentPower= 0; // reset power after shot
     }
+    
+    public float getCurrentPower() {
+    return currentPower;
+}
+public boolean isCharging() {
+    return powerGaugeActive;
+}
 
     public boolean isGameOver() { // checks if only one team has alive players
         int teamsWithAlivePlayers = 0;
@@ -224,6 +298,34 @@ public class GameEngine {
             }
         }
     }
+    public Team getCurrentTeam(){
+        // get the player pair corresponding to current turn index
+    Pair currentPair = turnOrder.get(currentTurnIndex);
+    // second element is the team index
+    int teamIndex = currentPair.y;
+        return teams.get(teamIndex);
+    
 }
+public void useSelectedWeapon(float dirX, float dirY) {
+    int slot = getSelectedSlot();
+    List<ObjectModel> inv = isTeamInventory() ? getCurrentTeam().getTeamInventory() : getCurrentPlayer().getInventory();
+    
+    if (slot < inv.size()) {
+        ObjectModel item = inv.get(slot);
+        if (item instanceof ProjectileWeapon) {
+            // Weapon creates and fires the projectile
+            ((ProjectileWeapon) item).fire(currentPlayer, dirX, dirY, currentPower, this);
+        } else if (item instanceof Weapon) {
+            item.use(currentPlayer, this); // If it's a non-projectile weapon, just use it
+        }
+        // if its a consumable
+        else if (item instanceof Consumable) {
+            item.use(currentPlayer, this);
+            removeFromInventory(item);
+        }
+    }
+}
+}
+
 
 

@@ -94,15 +94,39 @@ public class TerrainPanel extends JPanel {
                 }
             }
 
+            if (gameEngine != null && gameEngine.isCharging()) {
+            ObjectModel currentItem = gameEngine.getSelectedItem();
+            ActorModel currentPlayer = gameEngine.getCurrentPlayer();
+
+            if(currentItem instanceof Knife){ //draw knife preview
+                hud.drawKnifePreview(g2d, currentPlayer, gameEngine.getCurrentPower());
+            }
+            drawPowerGauge(g2d, currentPlayer, gameEngine.getCurrentPower());
+        }
             Projectile proj = gameEngine.getActiveProjectile();
             if(proj != null ){
                 proj.draw(g, scaleX, scaleY); // draw the projectile
             }
 
             if(gameEngine != null && hud !=null) {
-                hud.draw(g, panelHeight);
+                hud.draw(g, panelWidth, panelHeight);
             }
         }
     }
+    private void drawPowerGauge(Graphics2D g2d, ActorModel player, double power) {
+    int gaugeWidth = 40;
+    int gaugeHeight = 8;
+    int x = player.getX() + (player.getWidth() / 2) - (gaugeWidth / 2);
+    int y = player.getY() - 20;
+
+    // gauge background
+    g2d.setColor(Color.BLACK);
+    g2d.fillRect(x, y, gaugeWidth, gaugeHeight);
+
+    // fill gauge based on power
+    g2d.setColor(Color.getHSBColor((float)(0.3 * (1 - power/100.0)), 1.0f, 1.0f));
+    g2d.fillRect(x + 1, y + 1, (int)((gaugeWidth - 2) * (power / 100.0)), gaugeHeight - 2);
+}
 
 }
+

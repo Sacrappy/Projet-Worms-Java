@@ -2,6 +2,7 @@ package Backend;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Team {
@@ -14,6 +15,7 @@ public class Team {
     private final char teamSymbol;
     private int activePlayerID;
     public final ArrayList<Pair> playersOrder;
+    private List<ObjectModel> teamInventory = new ArrayList<>();
 
     public Team() throws IOException { // DO NOT USE UNLESS YOU UPDATE THIS CONSTRUCTOR
         teammates = new ActorModel[]{new ActorModel(),new ActorModel()};
@@ -36,6 +38,7 @@ public class Team {
     }
 
     public Team(Terrain terrain, int teamIndex) throws IOException {// USE THIS CONSTRUCTOR
+        teamInventory.add(new Knife());
         teammates = new ActorModel[]{new ActorModel(),new ActorModel()};
         Random randX= new Random();
         int mapWidth = terrain.getImage().getWidth();
@@ -103,6 +106,12 @@ public class Team {
         }
         return nb;
     }
+    public List <ObjectModel> getTeamInventory(){
+        return teamInventory;
+    }
+    public void removeFromInventory(ObjectModel item) {
+    this.teamInventory.remove(item);
+}
 
     public void updateHP(){
         HP = 0;

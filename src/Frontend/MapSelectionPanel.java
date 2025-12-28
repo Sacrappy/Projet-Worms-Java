@@ -19,8 +19,8 @@ public class MapSelectionPanel extends JPanel {
 
     // options for maps and backgrounds
     // index 0 is default "choose" option
-    private final String[] maps = {"* Choose Map *", "TerrainTest","MapTest"};
-    private final String[] backgrounds = {"* Choose Backgorund *", "BackGround_Test", "City","Forest","Mountains","Sky1","Sky2","Space"};
+    private final String[] maps = {"* Choose Map *","AncientTree","Buildings","Spaceship","TheBridge","ThePillar"};
+    private final String[] backgrounds = {"* Choose Backgorund *","City","Forest","Mountains","Sky1","Sky2","Space"};
 
     public MapSelectionPanel(GameWindow gameWindow) {
         this.gameWindow = gameWindow;

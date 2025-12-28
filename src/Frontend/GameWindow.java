@@ -1,9 +1,11 @@
 package Frontend;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -11,6 +13,7 @@ import javax.swing.SwingUtilities;
 
 import Backend.ActorModel;
 import Backend.GameEngine;
+import Backend.ObjectModel;
 import Backend.Team;
 import Backend.Terrain;
 
@@ -24,8 +27,8 @@ public class GameWindow extends JFrame implements KeyListener,Runnable{
     private OptionPanel optionPanel;
     private int mouseX = 0;
     private int mouseY = 0;
-    private String selectedMapPath ="/Images/Maps/TerrainTest.png";
-    private String selectedBackgroundPath="/Images/Backgrounds/BackGround_Test.png";
+    private String selectedMapPath ="/Images/Maps/TheBridge.png";
+    private String selectedBackgroundPath="/Images/Backgrounds/Sky1.png";
     private static long start;
     public static long elapsed;
 
@@ -41,16 +44,42 @@ public class GameWindow extends JFrame implements KeyListener,Runnable{
         optionPanel = new OptionPanel(this);
         add(menuPanel);
 
-        addMouseListener(new MouseAdapter(){
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                mouseX = e.getX(); // get mouse click position
-                mouseY = e.getY();
-                if(gameEngine != null && gameEngine.getActiveProjectile() == null){
-                    launchProjectile();
-                }
+        addMouseListener(new MouseAdapter() {
+    @Override
+    public void mousePressed(MouseEvent e) {
+        int panelHeight = getHeight();
+        int panelWidth = getWidth();
+        int hudHeightLimit = panelHeight - 100;
+        if (e.getY() > hudHeightLimit) {
+            int slotSize = 50;
+            int startX = (panelWidth - (8 * slotSize))/2; // Centred
+            int clickedSlot = (e.getX() - startX) / slotSize; //calculate clicked slot index
+
+            if (clickedSlot >= 0 && clickedSlot < 8) {
+                gameEngine.setSelectedSlot(clickedSlot);
             }
-        });
+            return; // prevent shooting when clicking on HUD
+        }
+        
+        Map<String, Integer> binds = optionPanel.getKeybindings();
+        if (e.getButton() == binds.getOrDefault("Shoot", -1)) {
+            if (gameEngine.getSelectedItem() != null && gameEngine.getActiveProjectile() == null) {
+                gameEngine.startCharging();
+            }
+        }
+    
+}
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+            if (gameEngine != null && gameEngine.isCharging()) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+                launchProjectile(); // this calls use() or fire() on the selected item
+            
+        }
+    }
+});
         // add KeyListener to the GameWindow
         addKeyListener(this);
 
@@ -59,6 +88,9 @@ public class GameWindow extends JFrame implements KeyListener,Runnable{
         requestFocus();
 
         setVisible(true); // Leave this last so that everything is set up before displaying
+    }
+    public GameEngine getGameEngine(){
+        return this.gameEngine;
     }
 
     public void setSelectedMapPath(String path){
@@ -72,8 +104,9 @@ public class GameWindow extends JFrame implements KeyListener,Runnable{
     private void launchProjectile(){
         if(terrainPanel == null || gameEngine == null) return;
         ActorModel currentPlayer = gameEngine.getCurrentPlayer();
-
         if(currentPlayer == null) return;
+        ObjectModel selectedItem = gameEngine.getSelectedItem();
+        if (selectedItem == null) return;
 
         int terrainWidth = terrainPanel.getGround().getImage().getWidth(); // native terrain dimensions
         int terrainHeight = terrainPanel.getGround().getImage().getHeight();
@@ -92,50 +125,69 @@ public class GameWindow extends JFrame implements KeyListener,Runnable{
 
         float dirX = worldMouseX - startX; // direction vector from player to mouse click
         float dirY = worldMouseY - startY;
-        gameEngine.shoot(dirX, dirY); // shoot the projectile
+
+        float length = (float) Math.sqrt(dirX * dirX + dirY * dirY); //normalize direction vector so power comes from the gauge
+        if (length >0){
+            dirX /= length;
+            dirY /= length;
+        }
+        selectedItem.use(gameEngine.getCurrentPlayer(), gameEngine);
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         if(gameEngine == null) return;
         // when a key is pressed
-        char code = e.getKeyChar(); // Caractère Unicode (ex: 'a')
+        int pressedCode = e.getKeyCode(); //use bind codes
+        Map<String, Integer> binds = optionPanel.getKeybindings();
         ActorModel currentPlayer = gameEngine.getCurrentPlayer();
         if(currentPlayer == null) return;
-        switch (code) {
-            case 'z': // jump
-                currentPlayer.jump();
-                break;
-            case 'q': // move left
-                currentPlayer.moveLeft(1);
-                break;
-            case 'd': // move right
-                currentPlayer.moveRight(1);
-                break;
-            case 'a' : //exit game
-                System.exit(0);
-                break;
-            case KeyEvent.VK_SPACE: // end turn
-                if(gameEngine.getActiveProjectile() == null){
-                    gameEngine.nextTurn();
-                    break;
-
-                }
-        }
-
+        if (pressedCode == binds.getOrDefault("Move Left", -1)) {
+        gameEngine.getCurrentPlayer().moveLeft(1);
+    } 
+    else if (pressedCode == binds.getOrDefault("Move Right", -1)) {
+        gameEngine.getCurrentPlayer().moveRight(1);
+    } 
+    else if (pressedCode == binds.getOrDefault("Jump", -1)) {
+        gameEngine.getCurrentPlayer().jump();
     }
+    else if (pressedCode == binds.getOrDefault("Shoot", -1)) {
+        if (gameEngine != null && gameEngine.getActiveProjectile() == null) {
+            gameEngine.startCharging();
+        }
+    else if (pressedCode == binds.getOrDefault("Pause", -1)) {
+        showOptionsScreen();
+    }
+    }
+}
+
+    
     @Override
     public void keyTyped(KeyEvent e) {} // not used but required by KeyListener interface
     @Override
     public void keyReleased(KeyEvent e) {
         if(gameEngine == null) return;
-        char code = e.getKeyChar();
+        int releasedCode = e.getKeyCode();
+        Map<String, Integer> binds = optionPanel.getKeybindings();
         ActorModel currentPlayer = gameEngine.getCurrentPlayer();
         if(currentPlayer == null) return;
-        if(code == 'q' || code == 'd'){ // stop moving when releasing q or d
-            currentPlayer.stopMoving();
+        if (releasedCode == binds.getOrDefault("Move Left", -1)) {
+            gameEngine.getCurrentPlayer().stopMoving();}
+        else if (releasedCode == binds.getOrDefault("Move Right", -1)) {
+            gameEngine.getCurrentPlayer().stopMoving();}
+        else if (releasedCode == binds.getOrDefault("Shoot", -1)) {
+        if (gameEngine != null && gameEngine.isCharging()) {
+            // for keyboard use mouse position
+            Point mousePos = getMousePosition();
+            if (mousePos != null) {
+                mouseX = mousePos.x;
+                mouseY = mousePos.y;
+                launchProjectile();
+            }
         }
+    }
     } // not used but required by KeyListener interface
+
 
 
     public void showMenuScreen(){

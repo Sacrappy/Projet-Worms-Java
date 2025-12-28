@@ -12,6 +12,7 @@ import Backend.GameEngine;
 import Backend.ActorModel;
 import Backend.Pair;
 import Backend.Team;
+import Backend.ObjectModel;
 
 
 public class HUD {
@@ -23,7 +24,7 @@ public class HUD {
 
     public HUD() {
         try {
-            this.playerIcon = loadHUDImage("/Images/Characters/CharacterTest.png");// Change when implementing choosable characters
+            this.playerIcon = loadHUDImage("/Images/CharactersPreview/Ver_Punk.png");// Change when implementing choosable characters
         } catch (IOException e) {
             e.printStackTrace();
             this.playerIcon = null; // or handle error appropriately
@@ -84,8 +85,29 @@ public class HUD {
         }
         currentPlayerID = len;
     }
+    public void drawKnifePreview(Graphics2D g2d, ActorModel player, float currentPower) {
+    int range = 40;
+    int arcAngle = 60;
+    
+    // Player center position
+    int x = player.getX() - range + (player.getWidth() / 2);
+    int y = player.getY() - range + (player.getHeight() / 2);
+    
+    // player facing
+    int startAngle = (player.getFacing() == 1) ? -arcAngle/2 : 180 - arcAngle/2;
 
-    public void draw(Graphics g, int panelHeight){
+    // make the power gauge color vary from white to red based on power
+    int red = (int) (150 + (currentPower / 100.0) * 105);
+    g2d.setColor(new Color(red, 50, 50, 100)); // Transparent
+
+    // draw the arc hitbox
+    g2d.fillArc(x, y, range * 2, range * 2, -startAngle, -arcAngle);
+    
+    // draw the arcborder
+    g2d.setColor(new Color(255, 255, 255, 200));
+    g2d.drawArc(x, y, range * 2, range * 2, -startAngle, -arcAngle);
+}
+    public void draw(Graphics g,int panelWidth, int panelHeight){
         definePlayerID();
         if (playerIcon == null || gameEngine == null) {
             return; // Cannot draw HUD without player icon or game engine
@@ -150,44 +172,73 @@ public class HUD {
         }
 
         //Affichage des tours.
-        g2d.setColor(Color.BLACK);
-        double x2 = gameEngine.getTerrain().getImage().getWidth()/2.0 - 12.0 * turns.size();
-        y = 20;
-        int x1 = 500;
-        int valueAdd = (gameEngine.getTerrain().getImage().getWidth()/2) - ((turns.size())/2 + 5) * 50;
-        ArrayList<Integer> xValues = new ArrayList<Integer>();
-        for(int j = 0; j < turns.size(); j++){
-            xValues.add(valueAdd + j * 50);
-        }
-        int i = 0;
-        while (i < xValues.size()) {
+        int avatarSize = 40;
+        int spacing = 10;
+        int totalTurnsWidth = turns.size() * (avatarSize + spacing);
+        int turnStartX=(panelWidth - totalTurnsWidth) / 2;
+        int turnY = 20;
+        for (int i = 0; i < turns.size(); i++) {
             ActorModel player = turns.get(i);
+            int currentX = turnStartX + i * (avatarSize + spacing);
 
             //Contour doré autour du joueur actif
             if(i == currentPlayerID){
                 g2d.setColor(new Color(227, 196, 48, 255));
-                g.fillRect(xValues.get(i) - 2,y - 2,player.getWidth()*4 + 4,player.getHeight()*3 + 4);
+                g2d.setStroke(new BasicStroke(3));
+                g.fillRect(currentX - 2,turnY - 2,avatarSize + 4,avatarSize + 4);
             }
             else{//Contour blanc autour de tout autre joueur
                 g2d.setColor(new Color(255, 255, 255));
-                g.fillRect(xValues.get(i) -2,y - 2,player.getWidth()*4 + 4,player.getHeight()*3 + 4);
+                g.fillRect(currentX -2,turnY - 2,avatarSize + 4,avatarSize + 4);
             }
             g2d.setColor(Color.BLACK);
 
             if (player.getIcon() != null) {
-                g.drawImage(player.getIcon(), xValues.get(i),y, player.getWidth() *4, player.getHeight()*3, null);
+                g.drawImage(player.getIcon(), currentX,turnY, avatarSize, avatarSize, null);
             }
             else{
-                g.fillRect(xValues.get(i),y,player.getWidth()*4,player.getHeight()*4);
+                g.fillRect(currentX,turnY,player.getWidth()*4,player.getHeight()*4);
             }
-            //x1 += (int) (12 * turns.size()/2.0);
-            i++;
         }
-
+        
 
 
         //Add the drawing of the inventory here once it is implemented
         
+        List<ObjectModel> itemsToDisplay =(gameEngine.isTeamInventory())? gameEngine.getCurrentTeam().getTeamInventory() : gameEngine.getCurrentPlayer().getInventory() ;
+        int slotSize = 50;
+        int startX = (panelWidth - (8 * slotSize)) / 2; // Centred
+        int yInv = panelHeight - slotSize - 20;
+
+        for (int a = 0; a < 8; a++) {
+           // draw the inventory slots
+        int currentSlotX = startX + (a * slotSize);
+        g2d.setColor(new Color(50, 50, 50, 200));
+        g2d.fillRect(startX + (a * slotSize), yInv, slotSize, slotSize);
+        if (a == gameEngine.getSelectedSlot()) {
+            g2d.setColor(new Color(100, 100, 100, 255));
+        }
+        g2d.fillRect(currentSlotX, yInv, slotSize, slotSize);     
+            if(a < itemsToDisplay.size()){
+                ObjectModel item = itemsToDisplay.get(a);
+                if (item.getIcon() != null) {
+                    g.drawImage(item.getIcon(), currentSlotX, yInv, slotSize, slotSize, null);
+                } else {
+                    // Draw a placeholder if no icon is available
+                    g2d.setColor(Color.DARK_GRAY);
+                    g2d.fillRect(startX + (a * slotSize), yInv, slotSize, slotSize);
+                }
+            }
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRect(currentSlotX, yInv, slotSize, slotSize);
+
+        // Wrap the permanent slots in gold
+        if (a < 2) {
+            g2d.setColor(new Color(255, 215, 0, 100)); // gold border
+            g2d.drawRect(startX + (a * slotSize) + 2, yInv + 2, slotSize - 4, slotSize - 4);
+        }
+    }
 
 
     }

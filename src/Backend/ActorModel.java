@@ -3,6 +3,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ActorModel {
     private static Terrain terrain;
@@ -30,13 +32,18 @@ public class ActorModel {
     private BufferedImage icon;
     //private Passive passive;
     //private Skill skill;
-    //private Item[] inventory;
+    private List<ObjectModel> inventory= new ArrayList<>();
+    
+    
+    
+    
 
     public static void setTerrain(Terrain terrain) {
         ActorModel.terrain = terrain;
     }
 
     public ActorModel(){
+        inventory.add(new Knife());
         HP = 100;
         maxHP = 100;
         MP = 100;
@@ -49,7 +56,7 @@ public class ActorModel {
         magicDamage = 20;
         speed = 1;
         try {
-            icon = Terrain.loadBufferedImage("/Images/Characters/CharacterTest.png");
+            icon = Terrain.loadBufferedImage("/Images/Characters/Ver_Punk.png");
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -78,6 +85,9 @@ public class ActorModel {
     }
     public void setHP(int HP){
         this.HP = Math.min(HP, maxHP);
+    }
+    public void heal(int healAmount){
+        this.HP = Math.min(HP + healAmount, maxHP);
     }
     public int getMaxHP() {
         return maxHP;
@@ -144,11 +154,19 @@ public class ActorModel {
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
+    public List<ObjectModel> getInventory(){
+        return inventory;
+    }
+    public void removeFromInventory(ObjectModel item) {
+    this.inventory.remove(item);
+}
     public void changeFacing(int newFacing) {
         assert(newFacing == 1 || newFacing == -1);
         this.facing = newFacing;
     }
-
+    public int getFacing() {
+        return facing;
+    }
     public boolean isOnGround(Terrain terrain) {
         //Verify if the character is touching any ground
         return terrain.isOnGround(this);
